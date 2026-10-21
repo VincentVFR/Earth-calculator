@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Explorez les distances à vol d’oiseau et le chemin le plus court entre deux villes sur un globe.">
+<meta name="description" content="Un outil pédagogique pour enseigner les distances et comprendre le plus court chemin entre deux villes sur un globe.">
 <meta name="theme-color" content="#f6f8f4">
 <title>GlobePath — La Terre, en perspective</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
@@ -12,19 +12,19 @@
 <a class="skip" href="#planner">Aller au calculateur</a>
 <header class="site-header"><a class="brand" href="./" aria-label="GlobePath, accueil"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><ellipse cx="16" cy="16" rx="6" ry="13"/><path d="M3 16h26M6 8h20M6 24h20"/></svg>Globe<span>Path</span></a><span class="header-note">Un autre regard sur les distances</span><a class="about-link" href="#about">Comment ça marche <span aria-hidden="true">↗</span></a></header>
 <main>
-<div class="intro"><p class="eyebrow">Explorer le monde</p><h1>Si loin. <em>Si proche.</em></h1><p>Deux villes, un arc sur la Terre.<br>Découvrez la distance qui les rapproche.</p></div>
+<div class="intro"><p class="eyebrow">Explorer le monde</p><h1>Si loin. <em>Si proche.</em></h1><p>Un outil pédagogique pour comprendre les distances.<br> Comparez deux villes et observez leur trajet sur le globe.</p></div>
 <div class="workspace">
 <section class="planner" id="planner" aria-labelledby="planner-title">
 <div class="panel-heading"><span class="section-number">01</span><h2 id="planner-title">Votre itinéraire</h2></div>
 <form id="route-form">
-<div class="field"><label for="departure"><span class="point" aria-hidden="true"></span>Ville de départ</label><div class="input-row"><input id="departure" name="departure" value="Paris" autocomplete="off" list="known-cities" aria-describedby="departure-hint"><button class="search-button" type="button" data-search="departure" aria-label="Rechercher une ville de départ">↗</button></div><p class="field-hint" id="departure-hint">France · 48,86° N / 2,35° E</p><ul class="search-results" id="departure-results" aria-label="Résultats pour le départ" hidden></ul></div>
+<div class="field"><label for="departure"><span class="point" aria-hidden="true"></span>Ville de départ</label><div class="input-row"><input id="departure" name="departure" value="Paris" autocomplete="off" maxlength="180" list="known-cities" aria-describedby="departure-hint"><button class="search-button" type="button" data-search="departure" aria-label="Rechercher une ville de départ">↗</button></div><p class="field-hint" id="departure-hint">France · 48,86° N / 2,35° E</p><ul class="search-results" id="departure-results" aria-label="Résultats pour le départ" hidden></ul></div>
 <div class="swap-row"><span></span><button id="swap" type="button" aria-label="Inverser le départ et la destination">⇅</button><span></span></div>
-<div class="field"><label for="destination"><span class="point destination" aria-hidden="true"></span>Ville d’arrivée</label><div class="input-row"><input id="destination" name="destination" value="Tokyo" autocomplete="off" list="known-cities" aria-describedby="destination-hint"><button class="search-button" type="button" data-search="destination" aria-label="Rechercher une ville d’arrivée">↗</button></div><p class="field-hint" id="destination-hint">Japon · 35,69° N / 139,69° E</p><ul class="search-results" id="destination-results" aria-label="Résultats pour l’arrivée" hidden></ul></div>
+<div class="field"><label for="destination"><span class="point destination" aria-hidden="true"></span>Ville d’arrivée</label><div class="input-row"><input id="destination" name="destination" value="Tokyo" autocomplete="off" maxlength="180" list="known-cities" aria-describedby="destination-hint"><button class="search-button" type="button" data-search="destination" aria-label="Rechercher une ville d’arrivée">↗</button></div><p class="field-hint" id="destination-hint">Japon · 35,69° N / 139,69° E</p><ul class="search-results" id="destination-results" aria-label="Résultats pour l’arrivée" hidden></ul></div>
 <datalist id="known-cities"></datalist>
 <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
 <button class="calculate" type="submit">Calculer la distance <span aria-hidden="true">↗</span></button>
 </form>
-<div class="try"><p>Une idée pour commencer ?</p><div class="examples"><button type="button" data-example="paris-tokyo">Paris → Tokyo</button><button type="button" data-example="london-newyork">Londres → New York</button><button type="button" data-example="sydney-santiago">Sydney → Santiago</button></div></div>
+<p class="coordinate-help">Une autre ville ? Saisissez ses coordonnées : latitude, longitude. Exemple : 52.52, 13.405.</p><div class="try"><p>Une idée pour commencer ?</p><div class="examples"><button type="button" data-example="paris-tokyo">Paris → Tokyo</button><button type="button" data-example="london-newyork">Londres → New York</button><button type="button" data-example="sydney-santiago">Sydney → Santiago</button></div></div>
 <div class="result" aria-live="polite" aria-atomic="true"><p class="eyebrow">À vol d’oiseau</p><div><strong id="distance">9 712</strong><span>km</span></div><p id="route-label">Paris → Tokyo</p><p id="route-note">Distance sur une sphère, hors trajet routier.</p></div>
 </section>
 <section class="map-panel" aria-label="Visualisation du trajet sur le globe">
@@ -34,7 +34,7 @@
 <div class="map-bottom"><p id="map-status" role="status">Vue schématique · calcul disponible sans service externe</p><div class="map-controls"><button id="rotate-left" type="button" aria-label="Tourner le globe vers la gauche">←</button><button id="recenter" type="button" aria-label="Recentrer sur le trajet">⌖</button><button id="rotate-right" type="button" aria-label="Tourner le globe vers la droite">→</button></div></div>
 </section>
 </div>
-<section class="explanation" id="about"><div><span class="section-number">02</span><h2>La ligne droite<br><em>prend le large.</em></h2></div><p>Sur une sphère, le plus court chemin suit un <strong>arc de grand cercle</strong> : c’est l’orthodromie. Sa courbe paraît surprenante sur une carte plane, mais elle relie les deux points au plus près sur la Terre.</p><p>Le calcul utilise le rayon moyen terrestre, soit 6 371 km. C’est une estimation géographique, pas un itinéraire de navigation ni une distance de vol réelle.</p></section>
+<section class="explanation" id="about"><div><span class="section-number">02</span><h2>La ligne droite<br> <em>prend le large.</em></h2></div><p>Sur une sphère, le plus court chemin suit un <strong>arc de grand cercle</strong> : c’est l’orthodromie. Sa courbe paraît surprenante sur une carte plane, mais elle relie les deux points au plus près sur la Terre.</p><p>Le calcul utilise le rayon moyen terrestre, soit 6 371 km. C’est une estimation géographique, pas un itinéraire de navigation ni une distance de vol réelle.</p></section>
 </main>
 <footer><span>GlobePath <span aria-hidden="true">/</span> La Terre, en perspective.</span><span>Aucun compte. Aucun suivi publicitaire.</span></footer>
 <noscript><p class="noscript">Activez JavaScript pour calculer les distances et afficher le globe.</p></noscript>
