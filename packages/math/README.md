@@ -16,7 +16,7 @@ Depuis GitHub Packages, après authentification autorisée et configuration du s
 npm install @vincentvfr/globepath-math@0.1.0-alpha.1
 ```
 
-Le dist-tag `alpha` suit les préversions ; cette version est privée et nécessite un accès au dépôt/paquet sur GitHub.
+Le dist-tag `alpha` suit les préversions ; le paquet est actuellement public sur GitHub Packages. Ce registre demande une authentification GitHub pour l’installation, y compris pour un paquet public.
 
 ```js
 const { geometry, solar } = require('@vincentvfr/globepath-math');
