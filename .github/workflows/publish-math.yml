@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+          ref: refs/tags/v0.1.0-alpha.1
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
@@ -43,7 +44,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGE_VERSION: ${{ inputs.version }}
-        run: npm publish artifacts/vincentvfr-globepath-math-${PACKAGE_VERSION}.tgz --tag alpha --ignore-scripts
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v0.1.0-alpha.1 --repo VincentVFR/Earth-calculator --pattern vincentvfr-globepath-math-0.1.0-alpha.1.tgz --dir artifacts --clobber
+          echo '248268dcf454df62df136e9c9329295ec42c7da074c037dd46f7fdef78a4ed8e  artifacts/vincentvfr-globepath-math-0.1.0-alpha.1.tgz' | sha256sum --check
+          mkdir -p build/release-package
+          tar -xzf artifacts/vincentvfr-globepath-math-0.1.0-alpha.1.tgz -C build/release-package
+          diff -r build/math build/release-package/package
+          npm publish ./artifacts/vincentvfr-globepath-math-${PACKAGE_VERSION}.tgz --tag alpha --ignore-scripts
       - name: Install the published version and verify package metadata
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,3 +65,4 @@ jobs:
           gh api users/VincentVFR/packages/npm/globepath-math > "$RUNNER_TEMP/package-metadata.json"
           node -e "const p=require(process.env.RUNNER_TEMP+'/package-metadata.json'); if(p.visibility!=='private'||p.repository?.full_name!=='VincentVFR/Earth-calculator') throw Error('Unexpected package visibility or repository'); console.log(JSON.stringify({name:p.name,visibility:p.visibility,repository:p.repository.full_name,html_url:p.html_url}))"
           npm view @vincentvfr/globepath-math dist-tags --json
+          npm view @vincentvfr/globepath-math@${PACKAGE_VERSION} dist --json
