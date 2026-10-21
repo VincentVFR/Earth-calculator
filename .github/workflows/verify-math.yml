@@ -1,0 +1,45 @@
+name: Verify GlobePath math alpha
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          ref: refs/tags/v0.1.0-alpha.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@vincentvfr'
+      - name: Verify existing published package without publishing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api users/VincentVFR/packages/npm/globepath-math > "$RUNNER_TEMP/package-metadata.json"
+          npm view @vincentvfr/globepath-math@0.1.0-alpha.1 dist --json > "$RUNNER_TEMP/package-dist.json"
+          npm view @vincentvfr/globepath-math dist-tags --json > "$RUNNER_TEMP/package-tags.json"
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const p=require(process.env.RUNNER_TEMP+'/package-metadata.json');
+          const d=require(process.env.RUNNER_TEMP+'/package-dist.json');
+          const tags=require(process.env.RUNNER_TEMP+'/package-tags.json');
+          const repo=p.repository;
+          console.log(JSON.stringify({packageMetadata:{name:p.name,visibility:p.visibility,html_url:p.html_url,repository:repo&&{full_name:repo.full_name,name:repo.name,id:repo.id,html_url:repo.html_url,private:repo.private}}}));
+          console.log(JSON.stringify({publishedDist:{integrity:d.integrity,shasum:d.shasum},distTags:tags}));
+          assert.equal(p.visibility,'private');
+          assert.equal(d.integrity,'sha512-LJiYDiQuhBe36qDpFVeNUaIUaAXE0JQUqlw3ldWBCejVRL7j6KRoUR064P4s4VDwcquvhQc4zIEsUJqzWSgVfw==');
+          assert.equal(d.shasum,'4ebea52622b30239e410690f8788a84e1fed5729');
+          assert.deepEqual(tags,{alpha:'0.1.0-alpha.1'});
+          NODE
+          install_dir=$(mktemp -d)
+          npm install --prefix "$install_dir" @vincentvfr/globepath-math@0.1.0-alpha.1 --ignore-scripts --no-audit --no-fund --package-lock=false
+          node scripts/smoke-package.cjs --installed "$install_dir"
