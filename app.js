@@ -3,7 +3,7 @@
 // ====================================
 
 // ⚠️ IMPORTANT: Insérez votre token Mapbox ici
-const MAPBOX_TOKEN = '';
+const MAPBOX_TOKEN = window.GlobeConfig?.mapboxToken || '';
 
 // API Nominatim pour le géocodage (OpenStreetMap - gratuit)
 const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
@@ -12,6 +12,9 @@ const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
 // INITIALISATION DE LA CARTE
 // ====================================
 
+if (!MAPBOX_TOKEN) {
+ document.getElementById('map').textContent = 'Carte détaillée non configurée. Ajoutez votre jeton public Mapbox dans config.js.';
+} else {
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const map = new mapboxgl.Map({
@@ -200,10 +203,10 @@ function calculateRoute() {
 
     // Calcul de l'arc de grand cercle (Great Circle)
     const options = { npoints: 100 };
-    const arc = turf.greatCircle(start, end, options);
+    const arc = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: GlobeMath.unwrap(GlobeMath.greatCircle(start, end)) } };
 
     // Calcul de la distance en kilomètres
-    const distance = turf.distance(start, end, { units: 'kilometers' });
+    const distance = GlobeMath.distance(start, end);
 
     // Afficher la distance
     document.getElementById('distance-text').textContent = `${Math.round(distance)} km`;
@@ -250,7 +253,7 @@ function animateCamera(start, end) {
     const centerLat = (start[1] + end[1]) / 2;
 
     // Calculer la distance pour ajuster le zoom
-    const distance = turf.distance(start, end, { units: 'kilometers' });
+    const distance = GlobeMath.distance(start, end);
 
     // Formule pour calculer le zoom approprié
     let zoom = 1;
@@ -294,3 +297,5 @@ window.addEventListener('resize', () => {
 
 console.log('🌍 GlobePath initialisé avec succès!');
 console.log('⚠️ N\'oubliez pas de remplacer MAPBOX_TOKEN par votre vrai token.');
+
+}
