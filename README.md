@@ -1,6 +1,6 @@
 # GlobePath — apprendre les distances
 
-Un outil pédagogique pour enseigner la géographie : comparer deux lieux, calculer leur distance à vol d’oiseau et observer l’arc de grand cercle sur un globe.
+Un outil pédagogique pour enseigner les distances en géographie et en astronomie : comparer deux lieux sur le globe et explorer les distances entre huit planètes avec un modèle simple.
 
 ## Démarrer
 
@@ -24,6 +24,24 @@ Ouvrir http://127.0.0.1:8080. Aucun `npm install`, framework ou compilation n’
 Le rayon moyen terrestre utilisé est 6 371,0088 km. La distance est celle d’un arc minimal **sur une sphère**, pas une route, un plan de vol ou une mesure ellipsoïdale de précision.
 
 La projection orthographique permet de voir le globe. Un arc de grand cercle peut y apparaître droit lorsqu’il passe par le centre de la projection. Une portion située derrière le globe est tracée en pointillé. Pour des points antipodaux, plusieurs arcs minimaux existent ; un arc est choisi de façon déterministe.
+
+## Laboratoire du système solaire
+
+L’onglet « Dans le système solaire » compare deux planètes parmi Mercure, Vénus, Terre, Mars, Jupiter, Saturne, Uranus et Neptune. Le curseur règle l’angle relatif vu du Soleil de 0° à 180°. Le résultat affiche millions de kilomètres, unités astronomiques (UA), temps de parcours de la lumière, minimum et maximum théoriques. Les huit distances au Soleil du modèle restent consultables.
+
+**Modèle pédagogique circulaire et coplanaire, pas des positions actuelles ni des éphémérides.** Les rayons orbitaux constants et arrondis sont [.387, .723, 1, 1.524, 5.203, 9.537, 19.189, 30.070] UA. Ils sont adaptés des demi-grands axes JPL à J2000 ; la Terre est simplifiée à 1 UA. On ne prétend pas reproduire les vraies orbites elliptiques et inclinées. Les deux orbites affichées partagent une même échelle ; un rayon très petit reste donc petit.
+
+La séparation vaut √(r₁² + r₂² − 2r₁r₂ cos θ), calculée sous une forme numériquement stable. Ses bornes sont |r₁−r₂| et r₁+r₂. Si une même planète est choisie deux fois, la distance est nulle et l’angle désactivé : on ne crée pas deux copies de cet astre.
+
+Constantes : 1 UA = 149 597 870,7 km exactement ; c = 299 792,458 km/s exactement. Le temps lumière correspond à distance/c, pour un trajet simple dans le vide.
+
+Sources :
+- JPL, éléments orbitaux approximatifs : https://ssd.jpl.nasa.gov/planets/approx_pos.html
+- NASA, orbites et lois de Kepler : https://science.nasa.gov/solar-system/orbits-and-keplers-laws/
+- IAU, résolution 2012 B2, unité astronomique : https://www.iau.org/static/resolutions/IAU2012_English.pdf
+- BIPM, définition SI du mètre et vitesse de la lumière : https://www.bipm.org/en/si-base-units/metre
+
+Pistes en classe : comparer 0°, 90° et 180° pour Terre–Mars ; expliquer pourquoi il n’existe pas une distance fixe entre planètes ; distinguer l’échelle d’une ville, de la Terre et du système solaire. Les données du modèle sont intégrées et n’exigent aucune API astronomique.
 
 ## Carte détaillée optionnelle
 
@@ -51,6 +69,7 @@ Avec Mapbox, le navigateur transmet les données techniques nécessaires au char
 
 ## Structure et contribution
 
+- `solar.js`, `solar-ui.js` : modèle orbital pédagogique autonome et contrôles accessibles.
 - `geometry.js` : calcul sphérique autonome, chemins et longitudes continues.
 - `app.js` : formulaire, globe SVG, sélection et recherche, carte optionnelle.
 - `index.html`, `styles.css`, `favicon.svg` : interface responsive.

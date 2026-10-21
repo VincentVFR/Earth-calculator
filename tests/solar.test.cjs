@@ -1,0 +1,7 @@
+const test=require('node:test'),assert=require('node:assert/strict'),S=require('../solar.js');
+test('classroom Earth–Mars conjunction and opposition',()=>{assert.ok(Math.abs(S.compare('earth','mars',0).au-.524)<1e-12);assert.equal(S.compare('earth','mars',180).au,2.524);});
+test('quadrature and phase limits',()=>{const x=S.compare('earth','mars',90);assert.ok(Math.abs(x.au-Math.hypot(1,1.524))<1e-12);assert.ok(x.au>x.minAu&&x.au<x.maxAu);});
+test('exact unit constants and light time',()=>{assert.equal(S.AU_KM,149597870.7);assert.equal(S.C_KM_S,299792.458);assert.ok(Math.abs(S.AU_KM/S.C_KM_S-499.00478383615643)<1e-9);});
+test('identical planet means same body, independent of angle',()=>{for(const theta of[0,90,180])assert.deepEqual([S.compare('earth','earth',theta).au,S.compare('earth','earth',theta).maxAu],[0,0]);});
+test('all distinct pairs at 0,90,180 are finite and bounded',()=>{for(const a of S.planets)for(const b of S.planets)for(const theta of[0,90,180]){const x=S.compare(a.id,b.id,theta);assert.ok([x.au,x.km,x.lightSeconds].every(Number.isFinite));assert.ok(x.au>=x.minAu-1e-10&&x.au<=x.maxAu+1e-10);assert.ok(Math.abs(x.au-S.compare(b.id,a.id,theta).au)<1e-10);}});
+test('reject unknown bodies and out of range or non-finite angles',()=>{for(const theta of[-1,181,NaN,Infinity,'90'])assert.throws(()=>S.compare('earth','mars',theta),RangeError);assert.throws(()=>S.compare('pluto','earth',0),RangeError);});

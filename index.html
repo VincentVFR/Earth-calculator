@@ -6,14 +6,14 @@
 <meta name="theme-color" content="#f6f8f4">
 <title>GlobePath — La Terre, en perspective</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
-<script src="config.js" defer></script><script src="geometry.js" defer></script><script src="app.js" defer></script>
+<script src="config.js" defer></script><script src="geometry.js" defer></script><script src="app.js" defer></script><script src="solar.js" defer></script><script src="solar-ui.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#planner">Aller au calculateur</a>
 <header class="site-header"><a class="brand" href="./" aria-label="GlobePath, accueil"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><ellipse cx="16" cy="16" rx="6" ry="13"/><path d="M3 16h26M6 8h20M6 24h20"/></svg>Globe<span>Path</span></a><span class="header-note">Un autre regard sur les distances</span><a class="about-link" href="#about">Comment ça marche <span aria-hidden="true">↗</span></a></header>
 <main>
-<div class="intro"><p class="eyebrow">Explorer le monde</p><h1>Si loin. <em>Si proche.</em></h1><p>Un outil pédagogique pour comprendre les distances.<br> Comparez deux villes et observez leur trajet sur le globe.</p></div>
-<div class="workspace">
+<div class="intro"><p class="eyebrow">Explorer le monde</p><h1>Si loin. <em>Si proche.</em></h1><p>Un outil pédagogique pour comprendre les distances.<br> Du globe terrestre aux orbites des planètes.</p></div>
+<div class="mode-tabs" role="tablist" aria-label="Choisir une exploration"><button id="earth-tab" role="tab" aria-selected="true" aria-controls="earth-view" type="button">Sur la Terre</button><button id="solar-tab" role="tab" aria-selected="false" aria-controls="solar-view" tabindex="-1" type="button">Dans le système solaire <span aria-hidden="true">↗</span></button></div><section id="earth-view" role="tabpanel" aria-labelledby="earth-tab"><div class="workspace">
 <section class="planner" id="planner" aria-labelledby="planner-title">
 <div class="panel-heading"><span class="section-number">01</span><h2 id="planner-title">Comparer deux lieux</h2></div>
 <form id="route-form">
@@ -35,6 +35,23 @@
 </section>
 </div>
 <section class="explanation" id="about"><div><span class="section-number">02</span><h2>La ligne droite<br> <em>prend le large.</em></h2></div><p>Sur une sphère, le plus court chemin suit un <strong>arc de grand cercle</strong> : c’est l’orthodromie. Sur une carte plane, cet arc peut apparaître courbe selon la projection. Il suit le plus court chemin à la surface de la sphère.</p><p>Le calcul utilise le rayon moyen terrestre, soit 6 371 km. C’est une estimation géographique, pas un itinéraire de navigation ni une distance de vol réelle.</p></section>
+</section>
+<section id="solar-view" role="tabpanel" aria-labelledby="solar-tab" hidden>
+<div class="workspace solar-workspace">
+<section class="planner solar-planner" aria-labelledby="solar-title"><div class="panel-heading"><span class="section-number">01</span><h2 id="solar-title">Comparer deux planètes</h2></div>
+<div class="field"><label for="planet-from">Première planète</label><select id="planet-from"></select><p class="field-hint" id="solar-from-radius"></p></div>
+<div class="field solar-second"><label for="planet-to">Deuxième planète</label><select id="planet-to"></select><p class="field-hint" id="solar-to-radius"></p></div>
+<div class="angle-control"><label for="planet-angle">Angle entre les directions <output id="angle-value" for="planet-angle">60°</output></label><input id="planet-angle" type="range" min="0" max="180" step="1" value="60" aria-describedby="angle-help"><div class="range-legend"><span>Même côté · 0°</span><span>Côtés opposés · 180°</span></div><p id="angle-help">Angle au Soleil entre les deux planètes.</p></div>
+<p class="model-note">Modèle circulaire simplifié : positions choisies, pas actuelles. Taille des astres symbolique.</p><div class="result solar-result" aria-live="polite" aria-atomic="true"><p class="eyebrow">Distance dans le modèle</p><div><strong id="solar-distance"></strong><span>M km</span></div><p id="solar-route"></p><p id="solar-au"></p><p class="light-time">Temps de parcours de la lumière : <strong id="solar-light"></strong></p></div>
+<div class="extremes"><div><span>Minimum théorique</span><strong id="solar-min"></strong></div><div><span>Maximum théorique</span><strong id="solar-max"></strong></div></div>
+</section>
+<section class="map-panel orbit-panel" aria-label="Schéma des deux orbites"><div class="map-top"><span class="live-dot"></span><span>Laboratoire des distances</span><span class="map-tag">Modèle circulaire</span></div>
+<svg id="orbit-svg" viewBox="0 0 800 610" role="img" aria-labelledby="orbits-title orbits-desc"><title id="orbits-title"></title><desc id="orbits-desc">Deux orbites circulaires centrées sur le Soleil. Le segment relie les deux planètes sélectionnées. Le schéma ne représente pas leurs positions actuelles.</desc><g id="orbit-drawing"></g><text class="globe-caption" x="400" y="570" text-anchor="middle">Les deux orbites sont représentées à la même échelle.</text></svg>
+<div class="map-bottom"><p id="solar-same" role="status"></p></div></section>
+</div>
+<section class="solar-explanation explanation" id="solar-about"><div><span class="section-number">02</span><h2>Une distance.<br> Plusieurs positions.</h2></div><p>Une planète ne se trouve pas toujours du même côté du Soleil qu’une autre. Faites varier leur angle relatif pour explorer la distance qui les sépare. <strong>1 UA = 149 597 870,7 km</strong> : une unité pratique à l’échelle du système solaire.</p><p>Ce modèle pédagogique simplifie les orbites en cercles dans un même plan. Les vraies orbites sont elliptiques et inclinées. <strong>Ce ne sont ni les positions actuelles ni des éphémérides.</strong> Le temps lumière est celui d’un trajet simple dans le vide.</p></section>
+<section class="planet-reference-section" aria-labelledby="planet-reference-title"><div class="reference-heading"><h2 id="planet-reference-title">Repères autour du Soleil</h2><p>Distance au Soleil dans le modèle · M km = millions de kilomètres</p></div><ul id="planet-reference"></ul><p class="sources">Rayons arrondis d’après les <a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">éléments orbitaux JPL à J2000</a> ; Terre simplifiée à 1 UA. Comprendre <a href="https://science.nasa.gov/solar-system/orbits-and-keplers-laws/">les orbites et les lois de Kepler (NASA)</a>.</p></section>
+</section>
 </main>
 <footer><span>GlobePath <span aria-hidden="true">/</span> La Terre, en perspective.</span><span>Aucun compte. Aucun suivi publicitaire.</span></footer>
 <noscript><p class="noscript">Activez JavaScript pour calculer les distances et afficher le globe.</p></noscript>
