@@ -1,0 +1,53 @@
+name: Verify GlobePath math alpha
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          ref: refs/tags/v0.1.0-alpha.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@vincentvfr'
+      - name: Verify existing published package without publishing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api users/VincentVFR/packages/npm/globepath-math > "$RUNNER_TEMP/package-metadata.json"
+          node <<'NODE'
+          const p=require(process.env.RUNNER_TEMP+'/package-metadata.json');
+          const repo=p.repository;
+          console.log(JSON.stringify({packageMetadata:{name:p.name,visibility:p.visibility,html_url:p.html_url,repository:repo&&{full_name:repo.full_name,name:repo.name,id:repo.id,html_url:repo.html_url,private:repo.private}}}));
+          NODE
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          (async()=>{
+            const response=await fetch('https://npm.pkg.github.com/@vincentvfr%2Fglobepath-math',{headers:{Authorization:'Bearer '+process.env.NODE_AUTH_TOKEN,Accept:'application/json'}});
+            console.log(JSON.stringify({registryResponse:{status:response.status}}));
+            assert(response.ok,'Registry request failed with HTTP '+response.status);
+            const p=await response.json();
+            const v=p.versions?.['0.1.0-alpha.1'];
+            console.log(JSON.stringify({publishedPackage:{name:p.name,version:v?.version,gitHead:v?.gitHead,integrity:v?.dist?.integrity,shasum:v?.dist?.shasum},distTags:p['dist-tags']}));
+            assert(v,'Published version is absent');
+            assert.equal(v.dist.integrity,'sha512-LJiYDiQuhBe36qDpFVeNUaIUaAXE0JQUqlw3ldWBCejVRL7j6KRoUR064P4s4VDwcquvhQc4zIEsUJqzWSgVfw==');
+            assert.equal(v.dist.shasum,'4ebea52622b30239e410690f8788a84e1fed5729');
+            assert.deepEqual(p['dist-tags'],{alpha:'0.1.0-alpha.1'});
+            const metadata=require(process.env.RUNNER_TEMP+'/package-metadata.json');
+            const repo=metadata.repository;
+            assert(repo?.id===1132503122 || repo?.html_url?.toLowerCase()==='https://github.com/vincentvfr/earth-calculator','Unexpected linked repository');
+          })().catch(error=>{console.error(error.message);process.exitCode=1;});
+          NODE
+          install_dir=$(mktemp -d)
+          npm install --prefix "$install_dir" @vincentvfr/globepath-math@0.1.0-alpha.1 --ignore-scripts --no-audit --no-fund --package-lock=false
+          node scripts/smoke-package.cjs --installed "$install_dir"

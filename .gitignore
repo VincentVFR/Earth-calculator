@@ -4,3 +4,7 @@ config.local.js
 .env.*
 playwright-report/
 test-results/
+build/
+artifacts/
+.cache/
+__pycache__/

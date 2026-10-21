@@ -102,3 +102,15 @@ Le projet utilise HTML, CSS et JavaScript natifs, avec des tests Node sans dépe
 | `tests/` | Tests des modèles géométriques |
 
 Consulter le [guide de contribution](CONTRIBUTING.md) pour proposer une amélioration ou corriger un problème. Le code est distribué sous [licence MIT](LICENSE) ; les services externes et leurs données conservent leurs propres conditions et licences.
+
+## Réutiliser les calculs et préparer une archive
+
+Le module [@vincentvfr/globepath-math](packages/math/README.md) expose les calculs terrestres et planétaires en CommonJS, sans dépendances ni accès réseau.
+
+```sh
+npm run build:package
+npm pack ./build/math --pack-destination artifacts --ignore-scripts
+python scripts/build-release.py --output-dir artifacts
+```
+
+Créer le dossier `artifacts` avant la commande `npm pack`. L’archive du site inclut ses instructions de démarrage, sa licence et le commit source ; elle ne contient aucun historique Git. La publication du module sur GitHub Packages est manuelle, avec le dist-tag `alpha`. Son installation depuis ce registre nécessite une authentification GitHub autorisée ; une archive `.tgz` téléchargée peut aussi être installée localement.
