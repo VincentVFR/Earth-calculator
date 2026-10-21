@@ -1,81 +1,104 @@
-# GlobePath — apprendre les distances
+# GlobePath
 
-Un outil pédagogique pour enseigner les distances en géographie et en astronomie : comparer deux lieux sur le globe et explorer les distances entre huit planètes avec un modèle simple.
+**Explorer les distances sur Terre et dans le système solaire.** GlobePath est un outil pédagogique interactif pour relier géographie, géométrie et astronomie : comparer deux lieux, observer leur trajet sur un globe, puis changer d’échelle avec les huit planètes.
 
-## Démarrer
+L’application fonctionne dans le navigateur, sans compte ni installation de dépendances. Les calculs et les exemples intégrés sont utilisables sans service externe.
 
-Prérequis : Node.js 20+ pour les tests, Python 3 pour le serveur local.
+## Ce que l’on peut explorer
+
+- **Sur Terre** : choisir deux villes ou saisir leurs coordonnées, calculer la distance de grand cercle et visualiser l’arc sur un globe schématique. Inverser les lieux ou charger un exemple pour comparer les résultats.
+- **Dans le système solaire** : choisir deux planètes parmi Mercure, Vénus, Terre, Mars, Jupiter, Saturne, Uranus et Neptune, puis faire varier leur angle relatif autour du Soleil. Comparer la distance en millions de kilomètres et en unités astronomiques, ainsi que le temps de parcours de la lumière.
+- **Changer de point de vue** : consulter les distances orbitales du modèle et les séparations minimale et maximale entre deux planètes.
+
+L’interface s’adapte au téléphone et à l’ordinateur. Les formulaires proposent des libellés, une validation des coordonnées et des messages de résultat accessibles au clavier.
+
+## Démarrer en local
+
+Prérequis : Python 3 pour servir les fichiers ; Node.js 20 ou plus pour exécuter les tests.
 
 ```sh
-npm test
+git clone --branch codex/earth-solar-classroom https://github.com/VincentVFR/Earth-calculator.git
+cd Earth-calculator
 python -m http.server 8080 --bind 127.0.0.1
 ```
 
-Ouvrir http://127.0.0.1:8080. Aucun `npm install`, framework ou compilation n’est nécessaire. Un hébergement statique suffit.
+Ouvrir [localhost:8080](http://127.0.0.1:8080). Aucun `npm install` ni étape de compilation n’est nécessaire. Un hébergement statique suffit pour déployer l’application.
 
-- Choisir une ville locale proposée, ou saisir **latitude, longitude**, en degrés décimaux avec un point : `48.86, 2.35`.
-- Cliquer sur la flèche pour afficher les résultats de recherche, puis choisir un résultat.
-- Calculer, inverser les deux lieux ou charger un exemple.
-- Les coordonnées sont validées : latitude −90…90, longitude −180…180.
-- Sans service externe, les villes locales, les coordonnées libres, les calculs et le globe schématique fonctionnent. Le schéma montre méridiens et parallèles ; il ne représente pas les continents.
+Pour vérifier les calculs :
 
-## Modèle et limites pédagogiques
+```sh
+npm test
+```
 
-Le rayon moyen terrestre utilisé est 6 371,0088 km. La distance est celle d’un arc minimal **sur une sphère**, pas une route, un plan de vol ou une mesure ellipsoïdale de précision.
+Choisir une ville proposée ou saisir une latitude et une longitude en degrés décimaux, séparées par une virgule : `48.86, 2.35`. Utiliser un point comme séparateur décimal. Les plages acceptées sont −90 à 90 pour la latitude et −180 à 180 pour la longitude.
 
-La projection orthographique permet de voir le globe. Un arc de grand cercle peut y apparaître droit lorsqu’il passe par le centre de la projection. Une portion située derrière le globe est tracée en pointillé. Pour des points antipodaux, plusieurs arcs minimaux existent ; un arc est choisi de façon déterministe.
+## Quelques pistes pour la classe
 
-## Laboratoire du système solaire
+1. **Lire un globe** : comparer Paris–Tokyo et Paris–New York, puis expliquer la différence entre un trajet sur la sphère et son dessin sur une projection.
+2. **Comprendre les coordonnées** : changer uniquement la latitude ou la longitude ; observer un passage près d’un pôle ou de l’antiméridien.
+3. **Mesurer entre les planètes** : choisir Terre–Mars et comparer les angles 0°, 90° et 180°. Expliquer pourquoi leur distance n’est pas constante.
+4. **Relier distance et lumière** : comparer le temps lumière entre des planètes proches et lointaines, puis distinguer ce temps d’un trajet de sonde spatiale.
 
-L’onglet « Dans le système solaire » compare deux planètes parmi Mercure, Vénus, Terre, Mars, Jupiter, Saturne, Uranus et Neptune. Le curseur règle l’angle relatif vu du Soleil de 0° à 180°. Le résultat affiche millions de kilomètres, unités astronomiques (UA), temps de parcours de la lumière, minimum et maximum théoriques. Les huit distances au Soleil du modèle restent consultables.
+## Modèles et sources
 
-**Modèle pédagogique circulaire et coplanaire, pas des positions actuelles ni des éphémérides.** Les rayons orbitaux constants et arrondis sont [.387, .723, 1, 1.524, 5.203, 9.537, 19.189, 30.070] UA. Ils sont adaptés des demi-grands axes JPL à J2000 ; la Terre est simplifiée à 1 UA. On ne prétend pas reproduire les vraies orbites elliptiques et inclinées. Les deux orbites affichées partagent une même échelle ; un rayon très petit reste donc petit.
+### Terre
 
-La séparation vaut √(r₁² + r₂² − 2r₁r₂ cos θ), calculée sous une forme numériquement stable. Ses bornes sont |r₁−r₂| et r₁+r₂. Si une même planète est choisie deux fois, la distance est nulle et l’angle désactivé : on ne crée pas deux copies de cet astre.
+La distance correspond à l’arc minimal sur une sphère de rayon moyen **6 371,0088 km**. Elle ne décrit pas un itinéraire routier, un plan de vol ou une mesure géodésique sur un ellipsoïde.
 
-Constantes : 1 UA = 149 597 870,7 km exactement ; c = 299 792,458 km/s exactement. Le temps lumière correspond à distance/c, pour un trajet simple dans le vide.
+Le globe schématique utilise une projection orthographique avec méridiens et parallèles. Il ne représente pas les continents. Les portions d’arc derrière le globe apparaissent en pointillé. Pour deux points antipodaux, plusieurs arcs minimaux existent ; l’application en choisit un de façon déterministe.
 
-Sources :
-- JPL, éléments orbitaux approximatifs : https://ssd.jpl.nasa.gov/planets/approx_pos.html
-- NASA, orbites et lois de Kepler : https://science.nasa.gov/solar-system/orbits-and-keplers-laws/
-- IAU, résolution 2012 B2, unité astronomique : https://www.iau.org/static/resolutions/IAU2012_English.pdf
-- BIPM, définition SI du mètre et vitesse de la lumière : https://www.bipm.org/en/si-base-units/metre
+### Système solaire
 
-Pistes en classe : comparer 0°, 90° et 180° pour Terre–Mars ; expliquer pourquoi il n’existe pas une distance fixe entre planètes ; distinguer l’échelle d’une ville, de la Terre et du système solaire. Les données du modèle sont intégrées et n’exigent aucune API astronomique.
+Les orbites sont **circulaires, coplanaires et de rayon constant**. Le curseur représente un angle relatif choisi par l’utilisateur : il ne donne pas les positions actuelles des planètes ni des éphémérides.
 
-## Carte détaillée optionnelle
+Les rayons utilisés, adaptés des demi-grands axes JPL à J2000, sont : 0,387 ; 0,723 ; 1 ; 1,524 ; 5,203 ; 9,537 ; 19,189 ; 30,070 UA. La Terre est simplifiée à 1 UA. Les deux orbites dessinées partagent la même échelle.
 
-Dans `config.js`, définir `mapboxToken` avec **votre jeton public navigateur** Mapbox (`pk.`). Le site fonctionne aussi si ce champ est vide. La carte détaillée utilise Mapbox GL JS 3.0.1, déjà employé par la version initiale ; elle charge le SDK et les tuiles à la demande. En cas d’indisponibilité, le globe schématique reste utilisable.
+Pour les rayons r₁ et r₂ et l’angle θ, la séparation suit la loi des cosinus : √(r₁² + r₂² − 2r₁r₂ cos θ). Ses bornes sont |r₁ − r₂| et r₁ + r₂. Choisir deux fois la même planète donne une distance nulle.
 
-Un jeton public navigateur est visible par conception ; ne jamais placer un jeton privé `sk.`, des identifiants ou un secret dans ce fichier. Configurer les domaines autorisés et les droits minimaux dans le compte Mapbox, vérifier les conditions de service et l’usage du compte avant de publier une version configurée.
+L’application utilise **1 UA = 149 597 870,7 km** et **c = 299 792,458 km/s**. Le temps lumière est celui d’un trajet simple dans le vide : distance divisée par c.
 
-La valeur initiale a été retirée des nouveaux fichiers ; elle reste dans le commit initial. Cette préparation ne révoque aucun jeton et ne certifie pas ses restrictions. Ne pas ouvrir l’historique sans sa propre revue.
+Références :
 
-Documentation : https://docs.mapbox.com/mapbox-gl-js/guides/
+- [JPL — éléments orbitaux approximatifs](https://ssd.jpl.nasa.gov/planets/approx_pos.html)
+- [NASA — orbites et lois de Kepler](https://science.nasa.gov/solar-system/orbits-and-keplers-laws/)
+- [IAU — résolution 2012 B2 sur l’unité astronomique](https://www.iau.org/static/resolutions/IAU2012_English.pdf)
+- [BIPM — définition du mètre et vitesse de la lumière](https://www.bipm.org/en/si-base-units/metre)
 
-## Recherche de villes optionnelle
+## Services optionnels
 
-Le champ `geocodingEndpoint` est vide par défaut. Il accepte l’URL HTTPS d’un service de recherche compatible Nominatim, idéalement un service maîtrisé ou un proxy. L’API reçoit `q`, `format=json`, `limit=5`, `addressdetails=1` et renvoie un tableau avec `lon`, `lat`, `display_name`, `address.country`. Le service doit autoriser les requêtes navigateur (CORS).
+La configuration publique se trouve dans `config.js`. Les deux champs restent vides par défaut ; les villes intégrées, les coordonnées libres, les calculs et le globe schématique restent disponibles.
 
-La recherche distante se déclenche uniquement par un clic explicite, jamais à chaque frappe. Cache en mémoire, annulation des requêtes périmées, délai maximal de huit secondes et espacement local d’au moins 1,1 seconde.
+### Carte détaillée avec Mapbox
 
-**Le service public Nominatim n’est pas configuré par défaut.** Sa politique interdit l’autocomplétion, impose une identification et attribution adaptées, limite l’usage total de l’application à une requête par seconde et exige de pouvoir changer de service. La limitation locale ne garantit pas le plafond global lorsque plusieurs visiteurs utilisent le site. Avant de choisir ce service, lire https://operations.osmfoundation.org/policies/nominatim/ ; prévoir un proxy/cache global et afficher l’attribution OpenStreetMap/ODbL requise. Pour une audience plus large, utiliser un fournisseur adapté ou sa propre instance.
+Renseigner `mapboxToken` avec un jeton public navigateur Mapbox (`pk.`). Le SDK Mapbox GL JS et les tuiles se chargent à la demande. Le globe schématique prend le relais si la carte est indisponible.
+
+Un jeton navigateur est visible par les visiteurs : utiliser des droits minimaux et des domaines autorisés dans le compte Mapbox. Ne jamais placer de jeton privé ni de secret dans ce fichier. Consulter le [guide Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides/) pour les conditions d’utilisation et la configuration.
+
+### Recherche de villes distante
+
+Renseigner `geocodingEndpoint` avec l’URL HTTPS d’un service compatible Nominatim qui autorise les requêtes navigateur (CORS). Il reçoit `q`, `format=json`, `limit=5` et `addressdetails=1`, puis renvoie un tableau contenant `lon`, `lat`, `display_name` et `address.country`.
+
+La recherche se lance par un clic explicite. L’application utilise un cache en mémoire, annule les requêtes périmées et applique un délai maximal de huit secondes ainsi qu’un espacement local d’au moins 1,1 seconde.
+
+Le service public Nominatim n’est pas configuré par défaut. Sa [politique d’utilisation](https://operations.osmfoundation.org/policies/nominatim/) impose notamment un plafond global d’une requête par seconde, une identification et une attribution adaptées, et interdit l’autocomplétion. La limitation par navigateur ne garantit pas ce plafond entre plusieurs visiteurs : prévoir un fournisseur adapté ou un proxy/cache global et l’attribution OpenStreetMap/ODbL requise.
 
 ## Données et confidentialité
 
-Aucun compte, analytics, historique de trajet ou stockage persistant dans cette application. Les calculs sont locaux. Sans configuration externe, elle ne contacte ni Mapbox ni un géocodeur.
+L’application n’intègre ni compte, ni analytics, ni historique de trajet, ni stockage persistant. Les calculs s’effectuent localement. Sans configuration externe, elle ne contacte ni Mapbox ni un géocodeur.
 
-Avec Mapbox, le navigateur transmet les données techniques nécessaires au chargement des cartes au fournisseur. Avec un géocodeur, la recherche saisie est transmise à l’endpoint configuré ; ne pas y saisir de données confidentielles. L’hébergeur et les fournisseurs conservent éventuellement leurs propres journaux.
+Avec une carte ou une recherche distante activée, le navigateur contacte le fournisseur concerné. Le géocodeur reçoit le texte recherché ; l’hébergeur et les fournisseurs peuvent conserver leurs propres journaux.
 
-## Structure et contribution
+## Contribuer
 
-- `solar.js`, `solar-ui.js` : modèle orbital pédagogique autonome et contrôles accessibles.
-- `geometry.js` : calcul sphérique autonome, chemins et longitudes continues.
-- `app.js` : formulaire, globe SVG, sélection et recherche, carte optionnelle.
-- `index.html`, `styles.css`, `favicon.svg` : interface responsive.
-- `config.js` : configuration publique optionnelle.
-- `tests/` : tests Node exécutables sans dépendance.
+Le projet utilise HTML, CSS et JavaScript natifs, avec des tests Node sans dépendances.
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md). Code sous [licence MIT](LICENSE). Les services et leurs données gardent leurs propres conditions/licences.
+| Fichiers | Rôle |
+| --- | --- |
+| `geometry.js` | Calculs sphériques et chemins sur le globe |
+| `solar.js`, `solar-ui.js` | Modèle du système solaire et contrôles |
+| `app.js` | Sélection des lieux, recherche et affichage terrestre |
+| `index.html`, `styles.css`, `favicon.svg` | Interface et présentation |
+| `config.js` | Services externes optionnels |
+| `tests/` | Tests des modèles géométriques |
 
-Cette préparation et les PRs ne constituent ni un déploiement ni une modification de la visibilité du dépôt.
+Consulter le [guide de contribution](CONTRIBUTING.md) pour proposer une amélioration ou corriger un problème. Le code est distribué sous [licence MIT](LICENSE) ; les services externes et leurs données conservent leurs propres conditions et licences.

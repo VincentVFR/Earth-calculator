@@ -11,4 +11,4 @@ Les améliorations doivent servir l’apprentissage : justesse des distances, ex
 
 Les captures/rapports de validation restent hors des sources. Distinguer tests simulés et vérification réelle des services externes. Un changement de source cartographique ou géographique doit documenter attribution, licence et conditions d’usage.
 
-La publication des sources, l’activation d’un fournisseur et le déploiement sont des décisions distinctes. Ne pas fusionner automatiquement les PRs empilées : examiner leurs dépendances.
+Pour signaler un problème, préciser le navigateur, les étapes de reproduction et le résultat attendu. Pour une proposition pédagogique, décrire le public concerné et l’usage envisagé.
