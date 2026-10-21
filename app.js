@@ -1,301 +1,81 @@
-// ====================================
-// CONFIGURATION
-// ====================================
-
-// ⚠️ IMPORTANT: Insérez votre token Mapbox ici
-const MAPBOX_TOKEN = window.GlobeConfig?.mapboxToken || '';
-
-// API Nominatim pour le géocodage (OpenStreetMap - gratuit)
-const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
-
-// ====================================
-// INITIALISATION DE LA CARTE
-// ====================================
-
-if (!MAPBOX_TOKEN) {
- document.getElementById('map').textContent = 'Carte détaillée non configurée. Ajoutez votre jeton public Mapbox dans config.js.';
-} else {
-mapboxgl.accessToken = MAPBOX_TOKEN;
-
-const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/satellite-streets-v12',
-    projection: 'globe', // 🌍 Projection Globe 3D
-    center: [0, 20],
-    zoom: 1.5,
-    pitch: 0
-});
-
-// Ajouter l'atmosphère réaliste
-map.on('style.load', () => {
-    map.setFog({
-        color: 'rgb(186, 210, 235)', // Couleur du ciel
-        'high-color': 'rgb(36, 92, 223)', // Couleur de l'atmosphère haute
-        'horizon-blend': 0.02,
-        'space-color': 'rgb(11, 11, 25)', // Couleur de l'espace
-        'star-intensity': 0.6
-    });
-});
-
-// ====================================
-// ÉTAT DE L'APPLICATION
-// ====================================
-
-let departureCoords = null;
-let destinationCoords = null;
-let searchTimeout = null;
-
-// ====================================
-// FONCTION DE RECHERCHE NOMINATIM
-// ====================================
-
-async function searchCity(query) {
-    if (!query || query.length < 3) return [];
-
-    try {
-        const response = await fetch(
-            `${NOMINATIM_API}?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
-            {
-                headers: {
-                    'User-Agent': 'GlobePath App'
-                }
-            }
-        );
-
-        if (!response.ok) throw new Error('Erreur de recherche');
-
-        const results = await response.json();
-        return results.map(result => ({
-            name: result.display_name,
-            lon: parseFloat(result.lon),
-            lat: parseFloat(result.lat)
-        }));
-    } catch (error) {
-        console.error('Erreur de géocodage:', error);
-        return [];
-    }
+/* GlobePath: local calculations and schematic globe; optional detailed Mapbox map. */
+(function(){
+'use strict';
+const G=window.GlobeMath,$=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const cities=[
+{name:'Paris',country:'France',coords:[2.3522,48.8566]},
+{name:'Tokyo',country:'Japon',coords:[139.6917,35.6895]},
+{name:'Londres',country:'Royaume-Uni',coords:[-0.1276,51.5072]},
+{name:'New York',country:'États-Unis',coords:[-74.006,40.7128]},
+{name:'Sydney',country:'Australie',coords:[151.2093,-33.8688]},
+{name:'Santiago',country:'Chili',coords:[-70.6693,-33.4489]},
+{name:'Mexico',country:'Mexique',coords:[-99.1332,19.4326]},
+{name:'Singapour',country:'Singapour',coords:[103.8198,1.3521]},
+{name:'Le Cap',country:'Afrique du Sud',coords:[18.4241,-33.9249]},
+{name:'Reykjavík',country:'Islande',coords:[-21.9426,64.1466]}
+];
+const selected={departure:cities[0],destination:cities[1]};
+let route=G.greatCircle(selected.departure.coords,selected.destination.coords),center=G.midpoint(selected.departure.coords,selected.destination.coords),map=null,mapReady=false,markers=[];
+const number=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+cities.forEach(city=>{const o=document.createElement('option');o.value=city.name;$('known-cities').append(o);});
+function hint(city){return city.country+' · '+Math.abs(city.coords[1]).toFixed(2).replace('.',',')+'° '+(city.coords[1]>=0?'N':'S')+' / '+Math.abs(city.coords[0]).toFixed(2).replace('.',',')+'° '+(city.coords[0]>=0?'E':'O');}
+function setCity(field,city){selected[field]=city;$(field).value=city.name;$(field+'-hint').textContent=hint(city);$(field).removeAttribute('aria-invalid');$(field+'-results').hidden=true;}
+for(const field of ['departure','destination']){
+ $(field).addEventListener('input',()=>{selected[field]=null;$(field+'-hint').textContent='Choisissez une ville proposée, puis calculez.';});
+ $(field).addEventListener('change',()=>{const city=cities.find(c=>normalize(c.name)===normalize($(field).value));if(city)setCity(field,city);});
 }
-
-// ====================================
-// GESTION DES INPUTS AVEC AUTOCOMPLÉTION
-// ====================================
-
-function setupAutocomplete(inputId, resultsId, callback) {
-    const input = document.getElementById(inputId);
-    const resultsDiv = document.getElementById(resultsId);
-
-    input.addEventListener('input', async (e) => {
-        const query = e.target.value;
-
-        // Annuler la recherche précédente
-        if (searchTimeout) clearTimeout(searchTimeout);
-
-        if (query.length < 3) {
-            resultsDiv.classList.add('hidden');
-            return;
-        }
-
-        // Debounce de 300ms
-        searchTimeout = setTimeout(async () => {
-            const results = await searchCity(query);
-
-            if (results.length === 0) {
-                resultsDiv.classList.add('hidden');
-                return;
-            }
-
-            // Afficher les résultats
-            resultsDiv.innerHTML = results
-                .map(
-                    (result) => `
-                <div class="autocomplete-item text-gray-800" data-lon="${result.lon}" data-lat="${result.lat}" data-name="${result.name}">
-                    <div class="font-semibold text-sm">${result.name.split(',')[0]}</div>
-                    <div class="text-xs text-gray-600">${result.name}</div>
-                </div>
-            `
-                )
-                .join('');
-
-            resultsDiv.classList.remove('hidden');
-
-            // Gérer le clic sur un résultat
-            resultsDiv.querySelectorAll('.autocomplete-item').forEach((item) => {
-                item.addEventListener('click', () => {
-                    const lon = parseFloat(item.dataset.lon);
-                    const lat = parseFloat(item.dataset.lat);
-                    const name = item.dataset.name;
-
-                    input.value = name.split(',')[0];
-                    resultsDiv.classList.add('hidden');
-
-                    callback({ lon, lat, name });
-                });
-            });
-        }, 300);
-    });
-
-    // Fermer les résultats au clic extérieur
-    document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
-            resultsDiv.classList.add('hidden');
-        }
-    });
+function el(tag,attrs={},text){const node=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,v);if(text!==undefined)node.textContent=text;return node;}
+function project(point){const l=(point[0]-center[0])*Math.PI/180,p=point[1]*Math.PI/180,c=center[1]*Math.PI/180;return{x:400+246*Math.cos(p)*Math.sin(l),y:320-246*(Math.cos(c)*Math.sin(p)-Math.sin(c)*Math.cos(p)*Math.cos(l)),visible:Math.sin(c)*Math.sin(p)+Math.cos(c)*Math.cos(p)*Math.cos(l)>=0};}
+function path(points,front=true){let d='',active=false;for(const p of points){const q=project(p);if(q.visible!==front){active=false;continue;}d+=(active?'L':'M')+q.x.toFixed(2)+','+q.y.toFixed(2);active=true;}return d;}
+function draw(){
+ const grid=$('graticule');grid.replaceChildren();
+ for(let lon=-180;lon<180;lon+=20){const points=Array.from({length:181},(_,i)=>[lon,i-90]);grid.append(el('path',{d:path(points),'class':'grid-line'}));}
+ for(let lat=-80;lat<=80;lat+=20){const points=Array.from({length:361},(_,i)=>[i-180,lat]);grid.append(el('path',{d:path(points),'class':'grid-line'}));}
+ $('globe-route').replaceChildren(el('path',{d:path(route,false),'class':'route-line route-back'}),el('path',{d:path(route),'class':'route-line'}));
+ const points=$('globe-points');points.replaceChildren();
+ for(const field of ['departure','destination']){const city=selected[field];if(!city)continue;const p=project(city.coords);if(p.visible){points.append(el('circle',{cx:p.x,cy:p.y,r:5,'class':'endpoint'}),el('text',{x:p.x+11,y:p.y-11,'class':'city-label'},city.name));}}
 }
-
-// Configuration des deux inputs
-setupAutocomplete('departure', 'departure-results', (coords) => {
-    departureCoords = coords;
-    updateMarker('departure', coords);
-});
-
-setupAutocomplete('destination', 'destination-results', (coords) => {
-    destinationCoords = coords;
-    updateMarker('destination', coords);
-});
-
-// ====================================
-// GESTION DES MARQUEURS
-// ====================================
-
-let departureMarker = null;
-let destinationMarker = null;
-
-function updateMarker(type, coords) {
-    // Supprimer l'ancien marqueur
-    if (type === 'departure' && departureMarker) {
-        departureMarker.remove();
-    }
-    if (type === 'destination' && destinationMarker) {
-        destinationMarker.remove();
-    }
-
-    // Créer le nouveau marqueur
-    const marker = new mapboxgl.Marker({
-        color: type === 'departure' ? '#3b82f6' : '#ef4444'
-    })
-        .setLngLat([coords.lon, coords.lat])
-        .addTo(map);
-
-    if (type === 'departure') {
-        departureMarker = marker;
-    } else {
-        destinationMarker = marker;
-    }
+function updateDetailedMap(){
+ if(!mapReady)return;
+ const coordinates=G.unwrap(route),data={type:'Feature',properties:{},geometry:{type:'LineString',coordinates}};
+ if(map.getSource('route'))map.getSource('route').setData(data);
+ else{map.addSource('route',{type:'geojson',data});map.addLayer({id:'route',type:'line',source:'route',paint:{'line-color':'#245a44','line-width':3}});}
+ markers.forEach(m=>m.remove());markers=['departure','destination'].map(field=>new mapboxgl.Marker({color:'#245a44'}).setLngLat(selected[field].coords).addTo(map));
+ map.fitBounds(G.bounds(route),{padding:70,maxZoom:5,duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:800});
 }
-
-// ====================================
-// CALCUL DU TRAJET ORTHODROMIQUE
-// ====================================
-
-document.getElementById('calculate-btn').addEventListener('click', calculateRoute);
-
-function calculateRoute() {
-    if (!departureCoords || !destinationCoords) {
-        alert('⚠️ Veuillez sélectionner un point de départ et une destination.');
-        return;
-    }
-
-    showLoading(true);
-
-    // Créer les points de départ et d'arrivée
-    const start = [departureCoords.lon, departureCoords.lat];
-    const end = [destinationCoords.lon, destinationCoords.lat];
-
-    // Calcul de l'arc de grand cercle (Great Circle)
-    const options = { npoints: 100 };
-    const arc = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: GlobeMath.unwrap(GlobeMath.greatCircle(start, end)) } };
-
-    // Calcul de la distance en kilomètres
-    const distance = GlobeMath.distance(start, end);
-
-    // Afficher la distance
-    document.getElementById('distance-text').textContent = `${Math.round(distance)} km`;
-    document.getElementById('distance-badge').classList.remove('hidden');
-
-    // Supprimer l'ancienne couche si elle existe
-    if (map.getLayer('route')) {
-        map.removeLayer('route');
-    }
-    if (map.getSource('route')) {
-        map.removeSource('route');
-    }
-
-    // Ajouter la nouvelle couche de trajet
-    map.addSource('route', {
-        type: 'geojson',
-        data: arc
-    });
-
-    map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        paint: {
-            'line-color': '#facc15', // Jaune vif
-            'line-width': 3,
-            'line-opacity': 0.9
-        }
-    });
-
-    // Animation de la caméra pour englober le trajet
-    animateCamera(start, end);
-
-    showLoading(false);
+function localSearch(field){const matches=cities.filter(c=>normalize(c.name).includes(normalize($(field).value)));const list=$(field+'-results');list.replaceChildren();for(const city of matches){const li=document.createElement('li'),b=document.createElement('button');b.type='button';b.textContent=city.name+' · '+city.country;b.addEventListener('click',()=>{setCity(field,city);$(field).focus();});li.append(b);list.append(li);}list.hidden=!matches.length;if(!matches.length)$('form-message').textContent='Essayez une ville proposée dans les exemples.';}
+document.querySelectorAll('[data-search]').forEach(b=>b.addEventListener('click',()=>localSearch(b.dataset.search)));
+function calculate(){
+ for(const field of ['departure','destination']){if(!selected[field]){const city=cities.find(c=>normalize(c.name)===normalize($(field).value));if(city)setCity(field,city);}}
+ const missing=['departure','destination'].find(f=>!selected[f]);
+ if(missing){$(missing).setAttribute('aria-invalid','true');$('form-message').textContent='Sélectionnez une ville connue dans le champ '+(missing==='departure'?'de départ.':'d’arrivée.');$(missing).focus();return;}
+ const a=selected.departure,b=selected.destination;route=G.greatCircle(a.coords,b.coords);center=G.midpoint(a.coords,b.coords);
+ const distance=G.distance(a.coords,b.coords);$('distance').textContent=number.format(distance);$('route-label').textContent=a.name+' → '+b.name;
+ $('route-note').textContent=distance<.001?'Les deux points sont identiques.':Math.abs(distance-Math.PI*G.R)<.001?'Points antipodaux : plusieurs arcs minimaux existent.':'Distance sur une sphère, hors trajet routier.';
+ $('form-message').textContent='';$('globe-title').textContent='Arc de grand cercle entre '+a.name+' et '+b.name;draw();updateDetailedMap();
 }
-
-// ====================================
-// ANIMATION DE LA CAMÉRA
-// ====================================
-
-function animateCamera(start, end) {
-    // Calculer le centre du trajet
-    const centerLon = (start[0] + end[0]) / 2;
-    const centerLat = (start[1] + end[1]) / 2;
-
-    // Calculer la distance pour ajuster le zoom
-    const distance = GlobeMath.distance(start, end);
-
-    // Formule pour calculer le zoom approprié
-    let zoom = 1;
-    if (distance < 500) zoom = 5;
-    else if (distance < 1000) zoom = 4;
-    else if (distance < 2500) zoom = 3;
-    else if (distance < 5000) zoom = 2.5;
-    else zoom = 2;
-
-    // Animation fluide de la caméra
-    map.flyTo({
-        center: [centerLon, centerLat],
-        zoom: zoom,
-        pitch: 45, // Vue légèrement inclinée
-        bearing: 0,
-        duration: 3000, // 3 secondes
-        essential: true
-    });
+$('route-form').addEventListener('submit',e=>{e.preventDefault();calculate();});
+$('swap').addEventListener('click',()=>{const a=selected.departure,b=selected.destination;if(!a||!b){$('form-message').textContent='Sélectionnez les deux villes avant de les inverser.';return;}setCity('departure',b);setCity('destination',a);calculate();});
+const examples={'paris-tokyo':[0,1],'london-newyork':[2,3],'sydney-santiago':[4,5]};
+document.querySelectorAll('[data-example]').forEach(b=>b.addEventListener('click',()=>{const [a,z]=examples[b.dataset.example];setCity('departure',cities[a]);setCity('destination',cities[z]);calculate();}));
+$('rotate-left').addEventListener('click',()=>{center[0]-=25;draw();if(mapReady)map.easeTo({bearing:map.getBearing()-25,duration:0});});
+$('rotate-right').addEventListener('click',()=>{center[0]+=25;draw();if(mapReady)map.easeTo({bearing:map.getBearing()+25,duration:0});});
+$('recenter').addEventListener('click',()=>{if(selected.departure&&selected.destination){center=G.midpoint(selected.departure.coords,selected.destination.coords);draw();updateDetailedMap();}});
+function fallback(){if(map){map.remove();map=null;}mapReady=false;$('map').hidden=true;$('globe').hidden=false;$('map-mode').textContent='Globe schématique';$('map-status').textContent='Carte détaillée indisponible · calcul et globe schématique disponibles';}
+async function detailedMap(){
+ const token=window.GlobeConfig?.mapboxToken;if(!token)return;
+ try{
+ const link=document.createElement('link');link.rel='stylesheet';link.href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css';document.head.append(link);
+ await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js';script.onload=resolve;script.onerror=reject;document.head.append(script);});
+ $('map').hidden=false;
+ map=new mapboxgl.Map({container:'map',accessToken:token,style:'mapbox://styles/mapbox/light-v11',projection:'globe',center,zoom:1.5});
+ map.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-right');
+ map.once('load',()=>{mapReady=true;$('globe').hidden=true;$('map-mode').textContent='Carte détaillée';$('map-status').textContent='Carte © Mapbox © OpenStreetMap · distance orthodromique';updateDetailedMap();});
+ map.on('error',fallback);
+ }catch(_){fallback();}
 }
-
-// ====================================
-// UTILITAIRES
-// ====================================
-
-function showLoading(show) {
-    const loading = document.getElementById('loading');
-    if (show) {
-        loading.classList.remove('hidden');
-    } else {
-        loading.classList.add('hidden');
-    }
-}
-
-// ====================================
-// GESTION DU REDIMENSIONNEMENT
-// ====================================
-
-window.addEventListener('resize', () => {
-    map.resize();
-});
-
-console.log('🌍 GlobePath initialisé avec succès!');
-console.log('⚠️ N\'oubliez pas de remplacer MAPBOX_TOKEN par votre vrai token.');
-
-}
+for(const field of ['departure','destination'])setCity(field,selected[field]);
+calculate();detailedMap();
+window.GlobePath={cities,setCity,calculate};
+})();
