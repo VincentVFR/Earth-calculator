@@ -29,7 +29,10 @@ Licence : MIT, fichier LICENSE inclus.
 html=entries['index.html'].decode('utf-8')
 import re
 for ref in re.findall(r'(?:src|href)=["\']([^"\']+)["\']',html):
- if not re.match(r'^(?:https?:|#|data:)',ref): assert ref.split('?')[0] in entries, 'Missing runtime asset: '+ref
+ if not re.match(r'^(?:https?:|#|data:)',ref):
+  local=ref.split('?')[0].split('#')[0].removeprefix('./')
+  if local in ('','.'): local='index.html'
+  assert local in entries, 'Missing runtime asset: '+ref
 out=Path(args.output_dir).resolve();out.mkdir(parents=True,exist_ok=True)
 archive=out/f'GlobePath-v{version}.zip';prefix=f'GlobePath-v{version}/'
 date=datetime.datetime.fromtimestamp(epoch,datetime.timezone.utc).timetuple()[:6]
