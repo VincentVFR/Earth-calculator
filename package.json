@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "test": "node --test",
-    "start": "python -m http.server 8080 --bind 127.0.0.1"
+    "start": "python -m http.server 8080 --bind 127.0.0.1",
+    "build:package": "node scripts/build-package.cjs"
   },
   "engines": {
     "node": ">=20"

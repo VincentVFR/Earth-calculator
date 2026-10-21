@@ -1,0 +1,59 @@
+name: Publish GlobePath math alpha
+run-name: Publish math ${{ inputs.version }} from ${{ github.ref_name }}
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact prerelease version to publish
+        required: true
+        default: 0.1.0-alpha.1
+        type: string
+permissions: {}
+concurrency:
+  group: globepath-math-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/codex/earth-release' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@vincentvfr'
+      - name: Verify version and math models
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          node -e "const p=require('./packages/math/package.json'); if(p.version!==process.env.EXPECTED_VERSION || !/^0\.1\.0-alpha\.[1-9]\d*$/.test(p.version)) throw Error('Unexpected prerelease version')"
+          npm test
+          npm run build:package
+          mkdir -p artifacts
+          npm pack ./build/math --pack-destination artifacts --ignore-scripts
+          node scripts/smoke-package.cjs artifacts/vincentvfr-globepath-math-${EXPECTED_VERSION}.tgz
+      - name: Publish alpha to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+        run: npm publish artifacts/vincentvfr-globepath-math-${PACKAGE_VERSION}.tgz --tag alpha --ignore-scripts
+      - name: Install the published version and verify package metadata
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+        run: |
+          npm view @vincentvfr/globepath-math@${PACKAGE_VERSION} version
+          install_dir=$(mktemp -d)
+          npm install --prefix "$install_dir" @vincentvfr/globepath-math@${PACKAGE_VERSION} --ignore-scripts --no-audit --no-fund --package-lock=false
+          node scripts/smoke-package.cjs --installed "$install_dir"
+          gh api users/VincentVFR/packages/npm/globepath-math > "$RUNNER_TEMP/package-metadata.json"
+          node -e "const p=require(process.env.RUNNER_TEMP+'/package-metadata.json'); if(p.visibility!=='private'||p.repository?.full_name!=='VincentVFR/Earth-calculator') throw Error('Unexpected package visibility or repository'); console.log(JSON.stringify({name:p.name,visibility:p.visibility,repository:p.repository.full_name,html_url:p.html_url}))"
+          npm view @vincentvfr/globepath-math dist-tags --json
