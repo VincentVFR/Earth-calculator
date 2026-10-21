@@ -8,4 +8,9 @@ for (const [source, target] of [
  ['packages/math/README.md', 'README.md'], ['geometry.js', 'geometry.js'],
  ['solar.js', 'solar.js'], ['LICENSE', 'LICENSE']
 ]) fs.writeFileSync(path.join(out, target), fs.readFileSync(path.join(root, source), 'utf8').replace(/\r\n/g, '\n'));
+const { execFileSync } = require('node:child_process');
+const manifestPath = path.join(out, 'package.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+manifest.gitHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log('Built six allowlisted package files in build/math.');
