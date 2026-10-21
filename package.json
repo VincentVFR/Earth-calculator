@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node --test tests/*.test.cjs",
+    "test": "node --test",
     "start": "python -m http.server 8080 --bind 127.0.0.1"
   },
   "engines": {
